@@ -1,0 +1,61 @@
+name: 'SSE CI/CD (Boost.Test)'
+on: push
+
+jobs:
+  style_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: clang-format lint
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        buildType: ["Debug", "Release"]
+        compiler: ["clang++" , "g++"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up build environment
+        uses: ConorMacBride/install-package@v1
+        with:
+          apt: build-essential gcc g++ clang libboost-all-dev libyaml-cpp-dev libeigen3-dev
+      - name: get-cmake
+        uses: lukka/get-cmake@v3.31.5
+      - name: Build SIDEMADE
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.buildType }} -DCMAKE_CXX_COMPILER=$(which ${{ matrix.compiler }}) ..
+          make -j $(nproc)
+      - name: "Upload build results"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.compiler }}-${{ matrix.buildType }}
+          path: build
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 1
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [ "clang++", "g++" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up build environment
+        uses: ConorMacBride/install-package@v1
+        with:
+          apt: build-essential gcc g++ clang libboost-all-dev libyaml-cpp-dev libeigen3-dev
+      - name: get-cmake
+        uses: lukka/get-cmake@v3.31.5
+      - name: "Get build data"
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.compiler }}-Debug
+          path: build
+      - name: "Run test"
+        run: cd build; chmod +x testsidemade; make test
+
