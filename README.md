@@ -1,5 +1,7 @@
 # SIDEMADE - Simple Dense Matrix Decomposition
 
+[![SSE CI/CD (Boost.Test)](https://github.com/Menkalian/testing-boost-exercise-wt2425/actions/workflows/ci.yml/badge.svg)](https://github.com/Menkalian/testing-boost-exercise-wt2425/actions/workflows/ci.yml)
+
 A simple demo code to read dense matrices from files and solve linear systems with them.
 
 ## Folder Structure
